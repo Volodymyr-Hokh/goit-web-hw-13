@@ -1,10 +1,11 @@
 from typing import List
 
-from fastapi import APIRouter, HTTPException, Depends, status, Query
+from fastapi import APIRouter, HTTPException, Depends, status, Request
 from sqlalchemy.orm import Session
 
 from src.database.db import get_db
 from src.database.models import User
+from src.limiter import limiter
 from src.schemas import ContactRequest, ContactResponse
 from src.services.auth import auth_service
 from src.repository import contacts as repository_contacts
@@ -13,7 +14,9 @@ router = APIRouter(prefix="/contacts", tags=["contacts"])
 
 
 @router.get("/", response_model=List[ContactResponse])
+@limiter.limit(limit_value="2/5seconds")
 async def read_contacts(
+    request: Request,
     offset: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
@@ -24,7 +27,9 @@ async def read_contacts(
 
 
 @router.get("/search", response_model=List[ContactResponse])
+@limiter.limit(limit_value="2/5seconds")
 async def search_contacts(
+    request: Request,
     query: str,
     offset: int = 0,
     limit: int = 10,
@@ -38,7 +43,9 @@ async def search_contacts(
 
 
 @router.get("/birthday", response_model=List[ContactResponse])
+@limiter.limit(limit_value="2/5seconds")
 async def find_birthdays(
+    request: Request,
     offset: int = 0,
     limit: int = 10,
     current_user: User = Depends(auth_service.get_current_user),
@@ -51,7 +58,9 @@ async def find_birthdays(
 
 
 @router.get("/{contact_id}", response_model=ContactResponse)
+@limiter.limit(limit_value="2/5seconds")
 async def read_contact(
+    request: Request,
     contact_id: int,
     current_user: User = Depends(auth_service.get_current_user),
     db: Session = Depends(get_db),
@@ -65,7 +74,9 @@ async def read_contact(
 
 
 @router.post("/", response_model=ContactResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit(limit_value="10/minute")
 async def create_contact(
+    request: Request,
     body: ContactRequest,
     current_user: User = Depends(auth_service.get_current_user),
     db: Session = Depends(get_db),
@@ -74,7 +85,9 @@ async def create_contact(
 
 
 @router.put("/{contact_id}", response_model=ContactResponse)
+@limiter.limit(limit_value="10/minute")
 async def update_contact(
+    request: Request,
     body: ContactRequest,
     contact_id: int,
     current_user: User = Depends(auth_service.get_current_user),
@@ -91,7 +104,9 @@ async def update_contact(
 
 
 @router.delete("/{contact_id}", response_model=ContactResponse)
+@limiter.limit(limit_value="10/minute")
 async def remove_contact(
+    request: Request,
     contact_id: int,
     current_user: User = Depends(auth_service.get_current_user),
     db: Session = Depends(get_db),

@@ -51,7 +51,9 @@ async def signup(
 
 @router.post("/login", response_model=TokenModel)
 async def login(
-    body: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
+    request: Request,
+    body: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
 ):
     user = await repository_users.get_user_by_email(body.username, db)
     if user is None:
@@ -78,6 +80,7 @@ async def login(
 
 @router.get("/refresh_token", response_model=TokenModel)
 async def refresh_token(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Security(security),
     db: Session = Depends(get_db),
 ):
@@ -101,7 +104,7 @@ async def refresh_token(
 
 
 @router.get("/confirmed_email/{token}")
-async def confirmed_email(token: str, db: Session = Depends(get_db)):
+async def confirmed_email(request: Request, token: str, db: Session = Depends(get_db)):
     email = await auth_service.get_email_from_token(token)
     user = await repository_users.get_user_by_email(email, db)
     if user is None:
