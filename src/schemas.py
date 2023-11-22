@@ -53,3 +53,8 @@ class EmailModel(BaseModel):
 
 class RequestEmail(BaseModel):
     email: EmailStr
+
+
+class UpdatePassword(BaseModel):
+    old_password: str = Field(min_length=6, max_length=10)
+    new_password: str = Field(min_length=6, max_length=10)

@@ -15,8 +15,15 @@ from fastapi.security import (
 from sqlalchemy.orm import Session
 
 from src.database.db import get_db
+from src.database.models import User
 from src.repository import users as repository_users
-from src.schemas import UserModel, UserResponse, TokenModel, RequestEmail
+from src.schemas import (
+    UserModel,
+    UserResponse,
+    TokenModel,
+    RequestEmail,
+    UpdatePassword,
+)
 from src.services.auth import auth_service
 from src.services.email import send_email
 
@@ -133,3 +140,22 @@ async def request_email(
             send_email, user.email, user.username, request.base_url
         )
     return {"message": "Please check your email."}
+
+
+@router.post("/update_password")
+async def update_password(
+    body: UpdatePassword,
+    user: User = Depends(auth_service.get_current_user),
+    db: Session = Depends(get_db),
+):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"
+        )
+    if not auth_service.verify_password(body.old_password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect current password"
+        )
+    new_hash_password = auth_service.get_password_hash(body.new_password)
+    await repository_users.update_password(user, new_hash_password, db)
+    return {"message": "Password updated"}

@@ -4,7 +4,7 @@ from slowapi.errors import RateLimitExceeded
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.limiter import limiter
-from src.routes import contacts, auth
+from src.routes import auth, contacts, users
 
 
 app = FastAPI()
@@ -24,3 +24,4 @@ app.add_middleware(
 
 app.include_router(contacts.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
+app.include_router(users.router, prefix="/api")
